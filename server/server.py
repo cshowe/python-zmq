@@ -4,15 +4,9 @@ import zmq
 
 class Scheduler(object):
     def __init__(self, gamestate):
-        self._t = 0
-        self._scheduler = sched.scheduler(self._now, self._delay)
         self._gamestate = gamestate
+        self._scheduler = sched.scheduler(self._gamestate.now, self._gamestate.delay)
 
-    def _now(self):
-        return self._t
-
-    def _delay(self, delay):
-        self._t += delay
 
     def handle_event(self, agent, action):
         self._gamestate.apply_action(action)
@@ -36,8 +30,22 @@ class Player(object):
         return self._socket.recv_json()
 
 
+class Bob(object):
+    def __init__(self):
+        pass
+
+    def get_action(self, gamestate):
+        if gamestate._quit:
+            return None
+        return {
+            'type': 'MOVE',
+            'dx': 1,
+        }
+
+
 class GameState(object):
     def __init__(self, size_x, size_y):
+        self._time = 0
         self._player_x = 5
         self._player_y = 5
         self._map = []
@@ -47,6 +55,12 @@ class GameState(object):
                 self._map.append(['#'] * size_x)
             else:
                 self._map.append(['#'] + ['.'] * (size_x - 2) + ['#'])
+
+    def now(self):
+        return self._time
+
+    def delay(self, delay):
+        self._time += delay
 
     def apply_action(self, action):
         if action.get('type', 'NOP') == 'QUIT':
@@ -65,6 +79,7 @@ class GameState(object):
             return {
                 'type': 'STATE',
                 'map': self._map,
+                'status': 'Time %d' % self._time,
                 'entities': [{
                     'type': 'player',
                     'x': self._player_x,
