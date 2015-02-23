@@ -25,6 +25,9 @@ class Console(object):
             y - Console.STATUS_HEIGHT - 1,
             Console.LEFT_WIDTH + 1, '-', x - Console.LEFT_WIDTH - 1)
 
+    def main_size(self):
+        return self._main.getmaxyx()
+
     def getch(self):
         return self._parent_window.getch()
 
@@ -46,7 +49,8 @@ class Console(object):
 
 def main_loop(window, socket):
     console = Console(window)
-    socket.send_json({'type': 'NOP'})
+    y, x = console.main_size()
+    socket.send_json({'size_x': x  - 1, 'size_y': y})
     while True:
         result = socket.recv_json()
         if result['type'] == 'QUIT':
