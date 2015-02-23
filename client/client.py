@@ -23,7 +23,7 @@ class Console(object):
         parent_window.vline(0, Console.LEFT_WIDTH, '|', y)
         parent_window.hline(
             y - Console.STATUS_HEIGHT - 1,
-            Console.LEFT_WIDTH + 1, '_', x - Console.LEFT_WIDTH - 1)
+            Console.LEFT_WIDTH + 1, '-', x - Console.LEFT_WIDTH - 1)
 
     def getch(self):
         return self._parent_window.getch()
@@ -34,6 +34,8 @@ class Console(object):
         self._status.noutrefresh()
 
         self._main.erase()
+        for y, line in enumerate(update_dict.get('map', [])):
+            self._main.addstr(y, 0, ''.join(line))
         for entity in update_dict.get('entities', []):
             self._main.addstr(entity['y'], entity['x'], '@')
         self._main.noutrefresh()
@@ -44,16 +46,15 @@ class Console(object):
 
 def main_loop(window, socket):
     console = Console(window)
-    console.update({'status': 'Connecting'})
-    console.refresh()
+    socket.send_json({'type': 'NOP'})
     while True:
-        keypress = console.getch()
-        socket.send_json(commands.input_to_command(keypress))
         result = socket.recv_json()
         if result['type'] == 'QUIT':
             break
         console.update(result)
         console.refresh()
+        keypress = console.getch()
+        socket.send_json(commands.input_to_command(keypress))
 
 if __name__ == '__main__':
     context = zmq.Context()
