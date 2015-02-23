@@ -38,7 +38,7 @@ def server_loop(socket, gamestate):
         request = socket.recv_json()
         if request['type'] == 'QUIT':
             socket.send_json({'type': 'QUIT'})
-            continue
+            return
         elif request['type'] == 'MOVE':
             gamestate.update(player_dx = request['dx'], player_dy = request['dy'])
         socket.send_json(gamestate.to_json())
